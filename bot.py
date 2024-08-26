@@ -5,8 +5,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
 from telegram.error import Forbidden
 
-TOKEN = '7355619387:AAF0Dy9YKnNMk5jj9ANlEdwmUHoCPv1BjRo'
-WEATHER_API_KEY = '28a12b618eac488888f194053242608 '
+TOKEN = ''
+WEATHER_API_KEY = ' '
 WEATHER_API_URL = 'http://api.weatherapi.com/v1/current.json'
 
 JOKES = [
@@ -15,7 +15,7 @@ JOKES = [
     "Чому програміст ніколи не грає в хованки? Бо хороший програміст завжди залишає сліди!"
 ]
 
-NEWS_API_KEY = '75fd9512d3f346498df27a0e66b340a3'
+NEWS_API_KEY = ''
 NEWS_API_URL = 'https://newsapi.org/v2/top-headlines'
 
 MOTIVATIONAL_QUOTES = [
