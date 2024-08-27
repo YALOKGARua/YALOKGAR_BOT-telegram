@@ -1,8 +1,7 @@
 import requests
+from config import WEATHER_API_KEY, NEWS_API_KEY
 
-WEATHER_API_KEY = 'YOUR_API'
 WEATHER_API_URL = 'http://api.weatherapi.com/v1/current.json'
-NEWS_API_KEY = 'YOUR_API'
 NEWS_API_URL = 'https://newsapi.org/v2/top-headlines'
 
 def get_weather(city):
