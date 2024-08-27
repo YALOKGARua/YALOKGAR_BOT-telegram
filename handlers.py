@@ -2,7 +2,6 @@ import random
 import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from telegram.error import Forbidden
 from api import get_weather, get_news
 
 JOKES = [
@@ -17,31 +16,49 @@ MOTIVATIONAL_QUOTES = [
     "Життя — це те, що відбувається, поки ти плануєш інше."
 ]
 
+LANGUAGES = {
+    'en': {
+        'start': 'Hello! I am your bot. What would you like to do?',
+        'weather': 'To get the weather, use the command /weather <city>',
+        'news': 'Here are the latest news:',
+        'quote': 'Here is a motivational quote for you:',
+        'feedback': 'Thank you for your feedback!',
+        'language': 'Language has been changed to {}.'
+    },
+    'uk': {
+        'start': 'Привіт! Я ваш бот. Що ви хочете зробити?',
+        'weather': 'Щоб дізнатися погоду, використовуйте команду /weather <місто>',
+        'news': 'Ось останні новини:',
+        'quote': 'Ось мотиваційна цитата для вас:',
+        'feedback': 'Дякуємо за ваш відгук!',
+        'language': 'Мова була змінена на {}.'
+    }
+}
+
 important_dates = {
     '2024-08-26': 'Сьогодні важливий день для нашого бота!',
 }
 
 async def start(update: Update, context: CallbackContext):
-    try:
-        keyboard = [
-            [InlineKeyboardButton("Отримати новини", callback_data='news')],
-            [InlineKeyboardButton("Мотиваційна цитата", callback_data='quote')],
-            [InlineKeyboardButton("Погода", callback_data='weather')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text('Привіт! Я ваш бот. Що ви хочете зробити?', reply_markup=reply_markup)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    user_language = context.user_data.get('language', 'en')
+    text = LANGUAGES[user_language]['start']
+    keyboard = [
+        [InlineKeyboardButton("Get News", callback_data='news')],
+        [InlineKeyboardButton("Motivational Quote", callback_data='quote')],
+        [InlineKeyboardButton("Weather", callback_data='weather')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(text, reply_markup=reply_markup)
 
 async def echo(update: Update, context: CallbackContext):
     try:
-        if update.message.chat.type in ['group', 'supergroup']:
+        if update.message and update.message.chat.type in ['group', 'supergroup']:
             if '@' + context.bot.username in update.message.text:
                 await update.message.reply_text(update.message.text.replace('@' + context.bot.username, '').strip())
-        else:
+        elif update.message:
             await update.message.reply_text(update.message.text)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in echo: {e}")
 
 async def feedback(update: Update, context: CallbackContext):
     try:
@@ -49,18 +66,18 @@ async def feedback(update: Update, context: CallbackContext):
         if feedback_text:
             with open('feedback.txt', 'a') as f:
                 f.write(f"{update.effective_user.id}: {feedback_text}\n")
-            await update.message.reply_text("Дякуємо за ваш відгук!")
+            await update.message.reply_text(LANGUAGES.get(context.user_data.get('language', 'en'), 'feedback'))
         else:
             await update.message.reply_text("Будь ласка, вкажіть текст відгуку.")
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in feedback: {e}")
 
 async def joke(update: Update, context: CallbackContext):
     try:
         joke = random.choice(JOKES)
         await update.message.reply_text(joke)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in joke: {e}")
 
 async def weather(update: Update, context: CallbackContext):
     try:
@@ -71,8 +88,8 @@ async def weather(update: Update, context: CallbackContext):
         
         weather_info = get_weather(city)
         await update.message.reply_text(weather_info)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in weather: {e}")
 
 async def check_dates(update: Update, context: CallbackContext):
     today = datetime.date.today().strftime('%Y-%m-%d')
@@ -84,32 +101,35 @@ async def check_dates(update: Update, context: CallbackContext):
 async def set_language(update: Update, context: CallbackContext):
     try:
         new_language = context.args[0]
-        if new_language in ['en', 'uk']:  # Example languages
+        if new_language in ['en', 'uk']:
             context.user_data['language'] = new_language
-            await update.message.reply_text(f"Мова була змінена на {new_language}.")
+            await update.message.reply_text(LANGUAGES[new_language]['language'].format(new_language))
         else:
             await update.message.reply_text("Невідома мова. Доступні: 'en', 'uk'.")
     except IndexError:
         await update.message.reply_text("Використання: /language <мова>")
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in set_language: {e}")
 
 async def news(update: Update, context: CallbackContext):
     try:
         news_info = get_news()
         if update.message:
             await update.message.reply_text(news_info)
-        else:
+        elif update.callback_query:
             await update.callback_query.message.reply_text(news_info)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+    except Exception as e:
+        print(f"Error in news: {e}")
 
 async def motivational_quote(update: Update, context: CallbackContext):
     try:
         quote = random.choice(MOTIVATIONAL_QUOTES)
-        await update.message.reply_text(quote)
-    except Forbidden:
-        print(f"Бот був заблокований користувачем {update.effective_user.id}")
+        if update.message:
+            await update.message.reply_text(quote)
+        elif update.callback_query:
+            await update.callback_query.message.reply_text(quote)
+    except Exception as e:
+        print(f"Error in motivational_quote: {e}")
 
 async def button(update: Update, context: CallbackContext):
     query = update.callback_query

@@ -1,9 +1,8 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-from handlers import start, echo, feedback, joke, weather, check_dates, set_language, news, motivational_quote, button
-from config import TOKEN
+from handlers import start, feedback, joke, weather, check_dates, set_language, news, motivational_quote, button, echo
 
 def main():
-    application = Application.builder().token(TOKEN).build()
+    application = Application.builder().token('7355619387:AAF0Dy9YKnNMk5jj9ANlEdwmUHoCPv1BjRo').build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("feedback", feedback))
