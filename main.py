@@ -1,22 +1,17 @@
 import random
-import requests
 import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext, CallbackQueryHandler
 from telegram.error import Forbidden
+from api import get_weather, get_news
 
-TOKEN = ''
-WEATHER_API_KEY = ' '
-WEATHER_API_URL = 'http://api.weatherapi.com/v1/current.json'
+TOKEN = '7355619387:AAF0Dy9YKnNMk5jj9ANlEdwmUHoCPv1BjRo'
 
 JOKES = [
     "Чому комп'ютер ніколи не відзначає свій день народження? Бо у нього вже є багато бітів!",
     "Як програмісти святкують Хелловін? Вони надягають костюм від '2-ох-місячної випробувальної версії'.",
     "Чому програміст ніколи не грає в хованки? Бо хороший програміст завжди залишає сліди!"
 ]
-
-NEWS_API_KEY = ''
-NEWS_API_URL = 'https://newsapi.org/v2/top-headlines'
 
 MOTIVATIONAL_QUOTES = [
     "Роби, що можеш, з тим, що маєш, там, де ти є.",
@@ -76,19 +71,8 @@ async def weather(update: Update, context: CallbackContext):
             await update.message.reply_text("Будь ласка, вкажіть місто.")
             return
         
-        response = requests.get(f"{WEATHER_API_URL}?key={WEATHER_API_KEY}&q={city}")
-        data = response.json()
-        
-        if 'current' in data:
-            weather_info = (
-                f"Погода в місті {city}:\n"
-                f"Температура: {data['current']['temp_c']}°C\n"
-                f"Стан: {data['current']['condition']['text']}\n"
-                f"Вологість: {data['current']['humidity']}%\n"
-            )
-            await update.message.reply_text(weather_info)
-        else:
-            await update.message.reply_text("Не вдалося отримати дані про погоду.")
+        weather_info = get_weather(city)
+        await update.message.reply_text(weather_info)
     except Forbidden:
         print(f"Бот був заблокований користувачем {update.effective_user.id}")
 
@@ -114,26 +98,11 @@ async def set_language(update: Update, context: CallbackContext):
 
 async def news(update: Update, context: CallbackContext):
     try:
-        response = requests.get(f"{NEWS_API_URL}?apiKey={NEWS_API_KEY}&country=us")
-        data = response.json()
-        
-        if 'articles' in data and data['articles']:
-            latest_news = data['articles'][0]
-            news_info = (
-                f"Останні новини:\n"
-                f"Заголовок: {latest_news['title']}\n"
-                f"Опис: {latest_news['description']}\n"
-                f"Посилання: {latest_news['url']}\n"
-            )
-            if update.message:
-                await update.message.reply_text(news_info)
-            else:
-                await update.callback_query.message.reply_text(news_info)
+        news_info = get_news()
+        if update.message:
+            await update.message.reply_text(news_info)
         else:
-            if update.message:
-                await update.message.reply_text("Не вдалося отримати новини.")
-            else:
-                await update.callback_query.message.reply_text("Не вдалося отримати новини.")
+            await update.callback_query.message.reply_text(news_info)
     except Forbidden:
         print(f"Бот був заблокований користувачем {update.effective_user.id}")
 
